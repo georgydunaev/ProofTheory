@@ -1,12 +1,16 @@
 Require Import Arith.
 
+(*Notation Q := RD.*)
+
+Section Arithmetic.
+(*Section ignore_this_section.*)
 Inductive Terms:Set :=
 | ZE : Terms                   (*zero*)
 | SU : Terms -> Terms          (*successor*)
 | AD : Terms -> Terms -> Terms (*addition*)
 | MU : Terms -> Terms -> Terms (*multiplication*)
 .
-Notation N := Terms. (* N is a set of terms *)
+Local Notation N := Terms. (* N is a set of terms *)
 Inductive RD : Prop -> Prop := (* Derivable in Robinson Arithmetic *)
 | R1 : RD (forall (x:N), not (SU x = ZE))
 | R2 : RD (forall (x y:N), SU x = SU y -> x = y)
@@ -16,9 +20,7 @@ Inductive RD : Prop -> Prop := (* Derivable in Robinson Arithmetic *)
 | R6 : RD (forall (x:N), MU x ZE = ZE)
 | R7 : RD (forall (x y:N), MU x (SU y) = AD (MU x y) x)
 .
-(*Notation Q := RD.*)
-
-Section Arithmetic.
+(*End ignore_this_section.*)
 (*Context (N:Set) (ZE:N) (SU:N->N) (AD MU:N->N->N) (*EQ:N->N->Prop*).*)
 
 Fixpoint num (x:nat) := 
@@ -152,44 +154,7 @@ Check Q5. (*: forall x y : N, AD x (SU y) = SU (AD x y)*)
 Check Q6. (*: forall x : N, MU x ZE = ZE*)
 Check Q7. (*: forall x y : N, MU x (SU y) = AD (MU x y) x*)
 
-(* Well-ordering lemmas *)
-Lemma l1case0 : forall z, LE ZE z.
-Proof.
-unfold LE.
-intro z.
-exists z. 
-apply (IND (fun z => AD ZE z = z)).
-apply Q4.
-intros y H.
-rewrite Q5.
-apply f_equal.
-exact H.
-Defined.
-
-Lemma wol0 (X:N->Prop) : (exists y, forall z, LE y z).
-Proof.
-exists ZE. exact l1case0.
-Defined.
-
-(* assume X has no least element. *)
-
-Lemma wol1 (X:N->Prop)(K:~(exists y, X y /\ forall z, (X z -> LE y z))):
-forall z, ~(X z).
-Proof.
-intros.
-apply (IND (fun z=> ~(X z))).
-+ unfold not.
-  intro h.
-  apply K.
-  exists ZE.
-  split. exact h.
-  intros. apply l1case0.
-+ intros y H q.
-  apply K.
-  exists (SU y).
-  split. exact q.
-  intros z0 H0.
-Abort.
+(* Strong induction lemmas *)
 
 Theorem AD_sym_lem :forall (n m:N), AD m (SU n) = AD (SU m) n.
 Proof.
@@ -297,6 +262,51 @@ Defined.
 
 End StrongInd.
 
+(* Well-ordering lemmas *)
+Lemma l1case0 : forall z, LE ZE z.
+Proof.
+unfold LE.
+intro z.
+exists z. 
+apply (IND (fun z => AD ZE z = z)).
+apply Q4.
+intros y H.
+rewrite Q5.
+apply f_equal.
+exact H.
+Defined.
+
+Lemma wol0 (X:N->Prop) : (exists y, forall z, LE y z).
+Proof.
+exists ZE. exact l1case0.
+Defined.
+
+(* assume X has no least element. *)
+
+Lemma wol1 (X:N->Prop)(K:~(exists y, X y /\ forall z, (X z -> LE y z))):
+forall z, ~(X z).
+Proof.
+intros.
+(*apply (IND (fun z=> ~(X z))).*)
+apply (strong_induction (fun z=> ~(X z))).
++ unfold not.
+  intro h.
+  apply K.
+  exists ZE.
+  split. exact h.
+  intros. apply l1case0.
++ (*intros y H q.
+  apply K.
+  exists (SU y).
+  split. exact q.
+  intros z0 H0.*)
+  intros y G s.
+  apply K.
+  exists (SU y).
+  split. exact s.
+  intros q w.
+  pose (Gq := G q).
+Abort.
 
 (* Well-ordering theorem *)
 Theorem WO (F:N->Prop) : 
@@ -304,22 +314,95 @@ Theorem WO (F:N->Prop) :
 Proof.
 intro e.
 Abort.
-(*rewrite Q2.
-simpl.
-rewrite sum_sym.*)
 
+(* Classical variant of principle is not provable in IPA. *)
 Theorem LNP (F:N->Prop): 
 (exists y, F y) -> (exists y, F y /\ forall z, LE z y -> not (F z)).
 Proof.
-intro e.
-destruct e as [y H].
-(*(exists y, F y /\ forall z, LE z y -> not (F z))*)
-unfold LE.
-
 Abort.
+(*
+~(exists y, F y /\ forall z, LE z y -> not (F z))
+->
+~(exists y, F y)
+*)
+
+(*Notation "'LT' z y " := (LE (SU z) y) (at level 1).*)
+Definition LT z y := (LE (SU z) y).
+Theorem LNP (F:N->Prop): 
+(forall y, ~ F y \/ exists z, LT z y /\ (F z))
+->
+(forall y, ~ F y)
+.
+Proof.
+intros H y.
+apply (strong_induction (fun x=> ~F x)).
++ destruct (H ZE) as [n|[z J]].
+  exact n.
+  destruct J as [[i k] J].
+  rewrite AD_sym in k.
+  rewrite Q5 in k.
+  destruct (Q1 _ k). (* AKA "inversion k." *)
++ intros a E.
+  destruct (H (SU a)) as [n|[z J]].
+  exact n.
+  destruct J as [B R].
+  apply LE_redu in B.
+  destruct (E z B R).
+Defined.
+
+(*  "The principle of induction is 
+          a consequence of the least number principle" 
+https://math.stackexchange.com/questions/1583102/least-number-principle
+*)
 
 End Peano.
 
 
 End Robinson.
+End Arithmetic.
+
+Module Type Q.
+Axioms (N:Set) (ZE:N) (SU:N->N) (AD MU:N->N->N).
+Axioms (Q1 : forall (x:N), not (SU x = ZE))
+       (Q2 : forall (x y:N), SU x = SU y -> x = y)
+       (Q3 : forall (y:N), (y = ZE) \/ exists x:N, y = SU x)
+       (Q4 : forall (x:N), AD x ZE = x)
+       (Q5 : forall (x y:N), AD x (SU y) = SU (AD x y))
+       (Q6 : forall (x:N), MU x ZE = ZE)
+       (Q7 : forall (x y:N), MU x (SU y) = AD (MU x y) x).
+End Q.
+
+(* The standard model of PA. *)
+Module nat_pa <: Q.
+Definition N:=nat.
+Definition ZE:=0.
+Definition SU:=S.
+Definition AD x y:=x+y.
+Definition MU x y:=x*y.
+Theorem Q1 : forall (x:N), not (SU x = ZE). 
+Proof. firstorder. Defined.
+Theorem Q2 : forall (x y:N), SU x = SU y -> x = y.
+Proof. firstorder. Defined.
+Theorem Q3 : forall (y:N), (y = ZE) \/ exists x:N, y = SU x.
+Proof.
+intro y. destruct y.
++ left; reflexivity.
++ right; exists y; reflexivity.
+Defined.
+Theorem Q4 : forall (x:N), AD x ZE = x.
+Proof. firstorder. Defined.
+Theorem Q5 : forall (x y:N), AD x (SU y) = SU (AD x y).
+Proof. firstorder. Defined.
+Theorem Q6 : forall (x:N), MU x ZE = ZE.
+Proof. firstorder. Defined.
+Theorem Q7 : forall (x y:N), MU x (SU y) = AD (MU x y) x.
+Proof. firstorder. Defined.
+Theorem IND : forall (P:N->Prop),
+(P ZE -> (forall y:N, P y -> P (SU y))-> forall y:N, P y).
+Proof. intros P H0 Hn y. 
+induction y.
++ exact H0.
++ exact (Hn y IHy).
+Defined.
+End nat_pa.
 
