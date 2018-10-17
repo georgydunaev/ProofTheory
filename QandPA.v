@@ -191,12 +191,90 @@ apply (IND (fun z=> ~(X z))).
   intros z0 H0.
 Abort.
 
+Theorem AD_sym_lem :forall (n m:N), AD m (SU n) = AD (SU m) n.
+Proof.
+pose (P:= (fun n:N=> forall m : N, AD m (SU n) = AD (SU m) n)).
+intro n.
+apply (IND P); unfold P.
++ intro m.
+  rewrite -> Q5.
+  repeat rewrite -> Q4. reflexivity.
++ intros y H m.
+  rewrite -> Q5.
+  rewrite -> H.
+  rewrite <- Q5.
+  reflexivity.
+Defined.
+
+Theorem AD_sym (y x:N) : AD x y = AD y x.
+Proof.
+pose (P:= (fun y:N=> forall x : N, AD x y = AD y x)).
+apply (IND P); unfold P.
++ apply (IND (fun x0=> AD x0 ZE = AD ZE x0)).
+  * reflexivity.
+  * intros.
+    symmetry.
+    rewrite -> Q5.
+    rewrite <- H.
+    rewrite -> Q4.
+    rewrite -> Q4.
+    reflexivity.
++ intros y0 H x0.
+    rewrite -> Q5.
+    rewrite H.
+    rewrite <- Q5.
+    apply AD_sym_lem.
+Defined.
+
+Theorem thm (m:N) (H : LE m ZE) : m = ZE.
+Proof.
+unfold LE in H.
+destruct H as [z e].
+pose (dv := Q3 m).
+destruct dv.
+exact H.
+destruct H as [u J].
+rewrite J in e.
+rewrite AD_sym in e.
+rewrite Q5 in e.
+inversion e.
+Defined.
+(*simpl in e.
+apply (IND (fun m=>m=ZE)).
+reflexivity.
+unfold AD in H.
+(*remember (2+2) as tpt.*)*)
+
+(* strong induction *)
+Section StrongInd.
+Context (P:N->Prop).
+Hypotheses IH0 : P ZE.
+Hypotheses IHn : forall y:N, (forall z, LE z y -> P z) -> P (SU y).
+Lemma strong_induction_all : forall n,
+(forall m, LE m n -> P m).
+Proof.
+apply (IND (fun n=> forall m:N,LE m n -> P m)).
++ intros m H. unfold LE in H.
+Abort.
+Theorem STRIND :
+ forall y:N, P y
+.
+Proof.
+intros Hn.
+apply IND.
+(*exact H0.
+intros y J.
+apply Hn.*)
+Abort.
+End StrongInd.
+
+
 (* Well-ordering theorem *)
 Theorem WO (F:N->Prop) : 
 (exists y, F y) -> (exists y, F y /\ forall z, (F z) -> LE y z).
 Proof.
 intro e.
-
+Abort.
 (*rewrite Q2.
 simpl.
 rewrite sum_sym.*)
@@ -206,8 +284,7 @@ Theorem LNP (F:N->Prop):
 Proof.
 intro e.
 destruct e as [y H].
-
-(exists y, F y /\ forall z, LE z y -> not (F z))
+(*(exists y, F y /\ forall z, LE z y -> not (F z))*)
 unfold LE.
 
 Abort.
@@ -215,6 +292,5 @@ Abort.
 End Peano.
 
 
-
-End Robinson
+End Robinson.
 
