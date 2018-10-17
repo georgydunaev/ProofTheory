@@ -226,7 +226,7 @@ apply (IND P); unfold P.
     apply AD_sym_lem.
 Defined.
 
-Theorem thm (m:N) (H : LE m ZE) : m = ZE.
+Theorem leq0_then_eq0 (m:N) (H : LE m ZE) : m = ZE.
 Proof.
 unfold LE in H.
 destruct H as [z e].
@@ -244,6 +244,24 @@ apply (IND (fun m=>m=ZE)).
 reflexivity.
 unfold AD in H.
 (*remember (2+2) as tpt.*)*)
+Lemma LE_redu (a y:N): LE (SU a) (SU y)-> LE a y.
+Proof.
+unfold LE.
+intro W.
+destruct W as [z U].
+rewrite AD_sym in U.
+rewrite Q5 in U.
+apply Q2 in U.
+rewrite AD_sym in U.
+exists z.
+exact U.
+Defined.
+
+Lemma LE_trans (a b c:N): LE a b -> LE b c -> LE a c.
+Proof.
+unfold LE.
+intros.
+Admitted.
 
 (* strong induction *)
 Section StrongInd.
@@ -254,18 +272,29 @@ Lemma strong_induction_all : forall n,
 (forall m, LE m n -> P m).
 Proof.
 apply (IND (fun n=> forall m:N,LE m n -> P m)).
-+ intros m H. unfold LE in H.
-Abort.
-Theorem STRIND :
- forall y:N, P y
-.
++ intros m H.
+  rewrite (leq0_then_eq0 m H).
+  exact IH0.
++ intros y F m l.
+  destruct (Q3 m) as [H|[a b]].
+  * rewrite H; exact IH0.
+  * rewrite b. apply IHn.
+    intro z.
+    intro J.
+    apply F.
+    rewrite b in l.
+    apply LE_redu in l.
+    apply (LE_trans z a y); assumption.
+Defined.
+
+Lemma strong_induction : forall n, P n.
 Proof.
-intros Hn.
-apply IND.
-(*exact H0.
-intros y J.
-apply Hn.*)
-Abort.
+intro n.
+destruct (Q3 n) as [e|[x e]].
++ rewrite e; exact IH0.
++ rewrite e. apply IHn. apply strong_induction_all.
+Defined.
+
 End StrongInd.
 
 
