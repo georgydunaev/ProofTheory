@@ -144,7 +144,76 @@ Admitted.
 Section Peano.
 Context (IND : forall (P:N->Prop),
 (P ZE -> (forall y:N, P y -> P (SU y))-> forall y:N, P y)).
+Check Q1. (* SU x <> ZE *)
+Check Q2. (* SU - injective *)
+Check Q3. (*forall y : N, y = ZE \/ (exists x : N, y = SU x)*)
+Check Q4. (*  forall x : N, AD x ZE = x*)
+Check Q5. (*: forall x y : N, AD x (SU y) = SU (AD x y)*)
+Check Q6. (*: forall x : N, MU x ZE = ZE*)
+Check Q7. (*: forall x y : N, MU x (SU y) = AD (MU x y) x*)
+
+(* Well-ordering lemmas *)
+Lemma l1case0 : forall z, LE ZE z.
+Proof.
+unfold LE.
+intro z.
+exists z. 
+apply (IND (fun z => AD ZE z = z)).
+apply Q4.
+intros y H.
+rewrite Q5.
+apply f_equal.
+exact H.
+Defined.
+
+Lemma wol0 (X:N->Prop) : (exists y, forall z, LE y z).
+Proof.
+exists ZE. exact l1case0.
+Defined.
+
+(* assume X has no least element. *)
+
+Lemma wol1 (X:N->Prop)(K:~(exists y, X y /\ forall z, (X z -> LE y z))):
+forall z, ~(X z).
+Proof.
+intros.
+apply (IND (fun z=> ~(X z))).
++ unfold not.
+  intro h.
+  apply K.
+  exists ZE.
+  split. exact h.
+  intros. apply l1case0.
++ intros y H q.
+  apply K.
+  exists (SU y).
+  split. exact q.
+  intros z0 H0.
+Abort.
+
+(* Well-ordering theorem *)
+Theorem WO (F:N->Prop) : 
+(exists y, F y) -> (exists y, F y /\ forall z, (F z) -> LE y z).
+Proof.
+intro e.
+
+(*rewrite Q2.
+simpl.
+rewrite sum_sym.*)
+
+Theorem LNP (F:N->Prop): 
+(exists y, F y) -> (exists y, F y /\ forall z, LE z y -> not (F z)).
+Proof.
+intro e.
+destruct e as [y H].
+
+(exists y, F y /\ forall z, LE z y -> not (F z))
+unfold LE.
+
+Abort.
+
 End Peano.
+
 
 
 End Robinson
