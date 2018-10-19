@@ -2,6 +2,7 @@ Require Import Arith.
 
 (*Notation Q := RD.*)
 
+(*
 Section Arithmetic.
 (*Section ignore_this_section.*)
 Inductive Terms:Set :=
@@ -22,15 +23,42 @@ Inductive RD : Prop -> Prop := (* Derivable in Robinson Arithmetic *)
 .
 (*End ignore_this_section.*)
 (*Context (N:Set) (ZE:N) (SU:N->N) (AD MU:N->N->N) (*EQ:N->N->Prop*).*)
+*)
 
+Module Type Ari.
+Parameters (N:Set) (ZE:N) (SU:N->N) (AD MU:N->N->N).
+End Ari.
+
+Module Type RA (w: Ari). (* Robinson Arithmetic *)
+Import w.
+(*Axioms (N:Set) (ZE:N) (SU:N->N) (AD MU:N->N->N).*)
+Axioms (Q1 : forall (x:N), not (SU x = ZE))
+       (Q2 : forall (x y:N), SU x = SU y -> x = y)
+       (Q3 : forall (y:N), (y = ZE) \/ exists x:N, y = SU x)
+       (Q4 : forall (x:N), AD x ZE = x)
+       (Q5 : forall (x y:N), AD x (SU y) = SU (AD x y))
+       (Q6 : forall (x:N), MU x ZE = ZE)
+       (Q7 : forall (x y:N), MU x (SU y) = AD (MU x y) x).
+End RA.
+
+Module Type PA (a:Ari) (ra : RA a). (* Peano Arithmetic *)
+Export a.
+Export ra.
+Axioms (IND : forall (P:N->Prop),
+ (P ZE -> (forall y:N, P y -> P (SU y))-> forall y:N, P y))
+.
+End PA.
+
+Module TheoremsRA (a:Ari) (ra : RA a).
+Import a.
+Import ra.
 Fixpoint num (x:nat) := 
  match x return N with
  | 0 => ZE
  | S y => SU (num y)
  end.
 (*Coercion num: nat >-> N.*)
-
-Section Robinson.
+(*Section Robinson.
 Context (Q1 : forall (x:N), not (SU x = ZE)).
 Context (Q2 : forall (x y:N), SU x = SU y -> x = y).
 Context (Q3 : forall (y:N), (y = ZE) \/ exists x:N, y = SU x).
@@ -38,9 +66,8 @@ Context (Q4 : forall (x:N), AD x ZE = x).
 Context (Q5 : forall (x y:N), AD x (SU y) = SU (AD x y)).
 Context (Q6 : forall (x:N), MU x ZE = ZE).
 Context (Q7 : forall (x y:N), MU x (SU y) = AD (MU x y) x).
-
+*)
 (* Lemma 1 *)
-
 Lemma l1_1 : forall k m, not (k = m) -> not (num m = num k).
 Proof.
 induction k,m.
@@ -113,6 +140,9 @@ Proof. intros.
 rewrite l1_3, l1_3. auto with arith.
 Defined.
 
+Definition LE (x y:N) := exists z, (AD x z = y).
+
+(*
 Definition IMP : forall (x:N), exists n:nat, x = (num n).
 Proof.
 intros.
@@ -131,19 +161,77 @@ Proof.
 intro x. destruct (IMP x) as [n H].
 rewrite -> H. apply Q4_sym_num.
 Defined.
+*)
+End TheoremsRA.
 
-Definition LE (x y:N) := exists z, (AD x z = y).
+Module TermsMod : Ari.
+Inductive Terms:Set :=
+| cZE : Terms                   (*zero*)
+| cSU : Terms -> Terms          (*successor*)
+| cAD : Terms -> Terms -> Terms (*addition*)
+| cMU : Terms -> Terms -> Terms (*multiplication*)
+.
+Definition N:=Terms.
+Definition ZE:=cZE.
+Definition SU:=cSU.
+Definition AD:=cAD.
+Definition MU:=cMU.
+End TermsMod.
+
+(*
+Module TheoremsAboutTerms. (* (w : RA TermsMod) <: RA. *)
+(*Module (ra: Q) *)
+(*Check Terms_ind.*)
+Export TermsMod.
+Module FM1 := TermsMod.
+Export FM1.
+Check ZE.
+Check N.
+Check TermsMod.N.
+Definition ghkjk (n:TermsMod.N):TermsMod.N.
+destruct n.
+(*Import w.*)
+(*Check Terms.*)
+(*Definition N:=Terms.*)
+Lemma Q4_sym : forall (x:N), AD ZE x = x.
+Proof.
+intro x.
+
+destruct x.
+destruct (Q3 x) as [E|[w E]].
+- rewrite -> E.
+  apply Q4.
+- (*induction E.*)
+  rewrite -> E.
+  rewrite -> Q5.
+  apply f_equal.
+  rewrite -> Q4.
+(* destruct (IMP x) as [n H].
+rewrite -> H. apply Q4_sym_num.*)
+Defined.
+
 Lemma l_1_5 : forall (m:nat) (x:N), (LE x (num m)) \/ (LE (num m) x).
+Proof.
 induction m.
-+ intro x. simpl. right. unfold LE. exists x. exact (Q4_sym x).
++ intro x. simpl. right. unfold LE. exists x. 
+(*exact (Q4_sym x).*)
 + intro x.
   destruct (IHm x).
   * left.
     admit.
   * unfold LE in H |-*.
-Admitted.
+Abort.
+End TheoremsAboutTerms.*)
 
-Section Peano.
+
+
+Module TheoremsPA (a:Ari) (ra : RA a) (pa : PA a ra).
+Module X := TheoremsRA a ra.
+Import X.
+Import pa.
+
+Section Peano. (* TODO Separate the lemmas above *)
+(*
 Context (IND : forall (P:N->Prop),
 (P ZE -> (forall y:N, P y -> P (SU y))-> forall y:N, P y)).
 Check Q1. (* SU x <> ZE *)
@@ -153,6 +241,7 @@ Check Q4. (*  forall x : N, AD x ZE = x*)
 Check Q5. (*: forall x y : N, AD x (SU y) = SU (AD x y)*)
 Check Q6. (*: forall x : N, MU x ZE = ZE*)
 Check Q7. (*: forall x y : N, MU x (SU y) = AD (MU x y) x*)
+*)
 
 (* Strong induction lemmas *)
 
@@ -202,7 +291,7 @@ destruct H as [u J].
 rewrite J in e.
 rewrite AD_sym in e.
 rewrite Q5 in e.
-inversion e.
+destruct (Q1 _ e). (* inversion e. *)
 Defined.
 (*simpl in e.
 apply (IND (fun m=>m=ZE)).
@@ -356,24 +445,14 @@ https://math.stackexchange.com/questions/1583102/least-number-principle
 *)
 
 End Peano.
+End TheoremsPA.
+(*End Robinson.
+End Arithmetic.*)
 
 
-End Robinson.
-End Arithmetic.
-
-Module Type Q.
-Axioms (N:Set) (ZE:N) (SU:N->N) (AD MU:N->N->N).
-Axioms (Q1 : forall (x:N), not (SU x = ZE))
-       (Q2 : forall (x y:N), SU x = SU y -> x = y)
-       (Q3 : forall (y:N), (y = ZE) \/ exists x:N, y = SU x)
-       (Q4 : forall (x:N), AD x ZE = x)
-       (Q5 : forall (x y:N), AD x (SU y) = SU (AD x y))
-       (Q6 : forall (x:N), MU x ZE = ZE)
-       (Q7 : forall (x y:N), MU x (SU y) = AD (MU x y) x).
-End Q.
 
 (* The standard model of PA. *)
-Module nat_pa <: Q.
+Module nat_pa (a:Ari) (ra:RA a) <: PA a ra.
 Definition N:=nat.
 Definition ZE:=0.
 Definition SU:=S.
