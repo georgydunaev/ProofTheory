@@ -2,6 +2,10 @@ Require Import Arith.
 
 (*Notation Q := RD.*)
 
+(* This file contains definitions and axioms for basic arithmetic and Peano Arithmetic. *)
+
+(* Author: mistral/mistral-medium-latest (Capability Tier 1) *)
+
 (*
 Section Arithmetic.
 (*Section ignore_this_section.*)
