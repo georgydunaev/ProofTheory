@@ -16,19 +16,28 @@
 4. **summ_assoc**: Associativity of addition on numerals.
 5. **l1_3**: Homomorphism of multiplication on numerals.
 6. **mul_sym**: Symmetry of multiplication on numerals.
-7. **AD_sym_lem & AD_sym**: General symmetry of addition for all elements of `N` in PA.
-8. **AD_assoc**: General associativity of addition for all elements of `N` in PA (`AD (AD x y) z = AD x (AD y z)`).
-9. **LE_redu**: Successor cancellation for inequality (`LE (SU a) (SU y) -> LE a y`).
-10. **LE_trans**: Transitivity of ordering in PA (`LE a b -> LE b c -> LE a c`), closing the foundational gap for strong induction.
-11. **strong_induction_all & strong_induction**: Full strong induction principle derived from PA induction.
-12. **LNP**: Constructive least number principle in intuitionistic PA.
-13. **nat_pa**: Standard model of Peano Arithmetic in Coq `nat`.
+7. **RD & RD_sound**: Inductive derivability system for Robinson Arithmetic (R1-R7, modus ponens, universal instantiation, equality rules) and its foundational soundness.
+8. **Q_pred_or_zero, Q_succ_nonzero, Q_succ_inj**: Derived structural properties of Robinson Arithmetic.
+9. **AD_sym_lem, AD_sym, AD_comm**: General commutativity of addition for all elements of `N` in PA.
+10. **AD_0_l**: Left identity of addition (`AD ZE x = x`).
+11. **AD_assoc**: General associativity of addition for all elements of `N` in PA (`AD (AD x y) z = AD x (AD y z)`).
+12. **MU_0_l & MU_SU_l**: Multiplication zero and successor distribution on the left.
+13. **MU_sym**: Multiplication commutativity in PA (`MU x y = MU y x`).
+14. **distrib_r & distrib_l**: Right and left distributivity of multiplication over addition.
+15. **MU_assoc**: Associativity of multiplication (`MU (MU x y) z = MU x (MU y z)`).
+16. **zero_product**: Zero-product property in PA (`MU x y = ZE -> x = ZE \/ y = ZE`).
+17. **PA Induction Schemes**: Formal induction instances (`PA_induction_instance`, `IND_param`, `IND_2var`, and `PA_fo_induction_instance` for first-order formulas).
+18. **LE_redu**: Successor cancellation for inequality (`LE (SU a) (SU y) -> LE a y`).
+19. **LE_trans**: Transitivity of ordering in PA (`LE a b -> LE b c -> LE a c`), closing the foundational gap for strong induction.
+20. **strong_induction_all & strong_induction**: Full strong induction principle derived from PA induction.
+21. **LNP**: Constructive least number principle in intuitionistic PA.
+22. **nat_pa**: Standard model of Peano Arithmetic in Coq `nat`.
 
 ## proofs_with_omega.v
 
 ### Theorems
 
-1. **OCP_leq0_then_eq0**: Automated proof using the `omega` tactic for `m <= 0 -> m = 0`.
+1. **OCP_leq0_then_eq0**: Automated proof using linear integer arithmetic (`lia` tactic) for `m <= 0 -> m = 0`.
 
 ## Gentzen Sequent Calculus (src/sequent_calculus.py & src/proof_checker.py)
 

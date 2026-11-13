@@ -111,7 +111,7 @@ Defined.
 Lemma l1_2 : forall m k, AD (num k) (num m) = num (k + m).
 Proof.
 induction m.
-+ intro k. rewrite plus_0_r. simpl. apply Q4.
++ intro k. rewrite Nat.add_0_r. simpl. apply Q4.
 + intro k. simpl. rewrite -> Q5. rewrite -> IHm.
 change (SU (num (k + m))) with (num (S (k + m))).
 auto with arith.
@@ -134,7 +134,7 @@ Defined.
 Lemma l1_3 : forall m k, MU (num k) (num m) = num (k * m).
 Proof.
 induction m.
-+ intro k. rewrite mult_0_r. simpl. apply Q6.
++ intro k. rewrite Nat.mul_0_r. simpl. apply Q6.
 + intro k. simpl. rewrite -> Q7. rewrite -> IHm.
 rewrite l1_2. apply f_equal. auto with arith.
 Defined.
@@ -145,6 +145,72 @@ rewrite l1_3, l1_3. auto with arith.
 Defined.
 
 Definition LE (x y:N) := exists z, (AD x z = y).
+
+Definition R1 := Q1.
+Definition R2 := Q2.
+Definition R3 := Q3.
+Definition R4 := Q4.
+Definition R5 := Q5.
+Definition R6 := Q6.
+Definition R7 := Q7.
+
+(* Robinson Arithmetic Derivability System *)
+Inductive RD : Prop -> Prop :=
+| R_ax1 : RD (forall x:N, not (SU x = ZE))
+| R_ax2 : RD (forall x y:N, SU x = SU y -> x = y)
+| R_ax3 : RD (forall y:N, y = ZE \/ exists x:N, y = SU x)
+| R_ax4 : RD (forall x:N, AD x ZE = x)
+| R_ax5 : RD (forall x y:N, AD x (SU y) = SU (AD x y))
+| R_ax6 : RD (forall x:N, MU x ZE = ZE)
+| R_ax7 : RD (forall x y:N, MU x (SU y) = AD (MU x y) x)
+| R_mp : forall (A B : Prop), RD (A -> B) -> RD A -> RD B
+| R_all_e : forall (P : N -> Prop), RD (forall x:N, P x) -> forall t:N, RD (P t)
+| R_refl : forall t:N, RD (t = t)
+| R_sym : forall t u:N, RD (t = u) -> RD (u = t)
+| R_trans : forall t u v:N, RD (t = u) -> RD (u = v) -> RD (t = v)
+| R_congr_SU : forall t u:N, RD (t = u) -> RD (SU t = SU u)
+| R_congr_AD : forall t1 t2 u1 u2:N, RD (t1 = u1) -> RD (t2 = u2) -> RD (AD t1 t2 = AD u1 u2)
+| R_congr_MU : forall t1 t2 u1 u2:N, RD (t1 = u1) -> RD (t2 = u2) -> RD (MU t1 t2 = MU u1 u2).
+
+Theorem RD_sound : forall (P : Prop), RD P -> P.
+Proof.
+  intros P H.
+  induction H.
+  - exact Q1.
+  - exact Q2.
+  - exact Q3.
+  - exact Q4.
+  - exact Q5.
+  - exact Q6.
+  - exact Q7.
+  - apply IHRD1, IHRD2.
+  - apply IHRD.
+  - reflexivity.
+  - symmetry; exact IHRD.
+  - transitivity u; [exact IHRD1 | exact IHRD2].
+  - f_equal; exact IHRD.
+  - f_equal; [exact IHRD1 | exact IHRD2].
+  - f_equal; [exact IHRD1 | exact IHRD2].
+Defined.
+
+Theorem RD_Q4_inst (x:N) : RD (AD x ZE = x).
+Proof.
+  apply (R_all_e (fun x => AD x ZE = x) R_ax4 x).
+Defined.
+
+Theorem RD_Q6_inst (x:N) : RD (MU x ZE = ZE).
+Proof.
+  apply (R_all_e (fun x => MU x ZE = ZE) R_ax6 x).
+Defined.
+
+Theorem Q_pred_or_zero (y:N) : y = ZE \/ exists x:N, y = SU x.
+Proof. exact (Q3 y). Defined.
+
+Theorem Q_succ_nonzero (x:N) : not (SU x = ZE).
+Proof. exact (Q1 x). Defined.
+
+Theorem Q_succ_inj (x y:N) : SU x = SU y -> x = y.
+Proof. exact (Q2 x y). Defined.
 
 (*
 Definition IMP : forall (x:N), exists n:nat, x = (num n).
@@ -330,6 +396,175 @@ apply (IND P); unfold P.
   reflexivity.
 Defined.
 
+Theorem AD_0_l (x:N) : AD ZE x = x.
+Proof.
+  apply (IND (fun x => AD ZE x = x)).
+  - apply Q4.
+  - intros y IH. rewrite Q5. rewrite IH. reflexivity.
+Defined.
+
+Theorem AD_comm (x y:N) : AD x y = AD y x.
+Proof.
+  apply AD_sym.
+Defined.
+
+Lemma ad_4_swap (a b c d : N) : AD (AD a b) (AD c d) = AD (AD a c) (AD b d).
+Proof.
+  rewrite AD_assoc.
+  rewrite <- (AD_assoc b c d).
+  rewrite (AD_sym c b).
+  rewrite AD_assoc.
+  rewrite <- AD_assoc.
+  reflexivity.
+Defined.
+
+Theorem MU_0_l (x:N) : MU ZE x = ZE.
+Proof.
+  apply (IND (fun x => MU ZE x = ZE)).
+  - apply Q6.
+  - intros y IH. rewrite Q7. rewrite Q4. apply IH.
+Defined.
+
+Theorem MU_SU_l (x y:N) : MU (SU x) y = AD (MU x y) y.
+Proof.
+  apply (IND (fun y => MU (SU x) y = AD (MU x y) y)).
+  - rewrite Q6. rewrite Q6. rewrite Q4. reflexivity.
+  - intros y0 IH. rewrite Q7. rewrite IH. rewrite Q7.
+    rewrite Q5. rewrite Q5. apply f_equal.
+    rewrite AD_assoc. rewrite (AD_assoc (MU x y0) x y0).
+    rewrite (AD_sym y0 x). reflexivity.
+Defined.
+
+Theorem MU_sym (x y:N) : MU x y = MU y x.
+Proof.
+  apply (IND (fun y => MU x y = MU y x)).
+  - rewrite Q6. rewrite MU_0_l. reflexivity.
+  - intros y0 IH. rewrite Q7. rewrite IH. rewrite MU_SU_l. reflexivity.
+Defined.
+
+Theorem distrib_r (x y z:N) : MU (AD x y) z = AD (MU x z) (MU y z).
+Proof.
+  apply (IND (fun z => MU (AD x y) z = AD (MU x z) (MU y z))).
+  - repeat rewrite Q6. rewrite Q4. reflexivity.
+  - intros z0 IH. rewrite Q7. rewrite IH.
+    repeat rewrite Q7.
+    apply ad_4_swap.
+Defined.
+
+Theorem distrib_l (x y z:N) : MU x (AD y z) = AD (MU x y) (MU x z).
+Proof.
+  rewrite (MU_sym x (AD y z)).
+  rewrite distrib_r.
+  rewrite (MU_sym y x).
+  rewrite (MU_sym z x).
+  reflexivity.
+Defined.
+
+Theorem MU_assoc (x y z:N) : MU (MU x y) z = MU x (MU y z).
+Proof.
+  apply (IND (fun z => MU (MU x y) z = MU x (MU y z))).
+  - repeat rewrite Q6. reflexivity.
+  - intros z0 IH. rewrite Q7. rewrite IH. rewrite Q7.
+    rewrite distrib_l. reflexivity.
+Defined.
+
+Theorem zero_product (x y : N) : MU x y = ZE -> x = ZE \/ y = ZE.
+Proof.
+  intro H.
+  destruct (Q3 y) as [Hy | [y' Hy]].
+  - right. exact Hy.
+  - rewrite Hy in H.
+    rewrite Q7 in H.
+    rewrite (AD_sym x (MU x y')) in H.
+    destruct (Q3 x) as [Hx | [x' Hx]].
+    + left. exact Hx.
+    + rewrite Hx in H.
+      rewrite <- AD_sym_lem in H.
+      rewrite Q5 in H.
+      exfalso.
+      apply (Q1 _ H).
+Defined.
+
+(* First-Order Peano Arithmetic Induction Scheme & Instances *)
+Definition PA_induction_instance (P : N -> Prop) (H0 : P ZE) (Hstep : forall y, P y -> P (SU y)) : forall y, P y :=
+  IND P H0 Hstep.
+
+Theorem IND_param (P : N -> N -> Prop) :
+  (forall p : N, P ZE p) ->
+  (forall (y : N) (p : N), P y p -> P (SU y) p) ->
+  forall (y p : N), P y p.
+Proof.
+  intros H0 Hsucc y.
+  apply (IND (fun y' => forall p, P y' p)).
+  + intro p. apply H0.
+  + intros y' IH p. apply Hsucc, IH.
+Defined.
+
+Theorem IND_2var (P : N -> N -> Prop) :
+  P ZE ZE ->
+  (forall y, P ZE y -> P ZE (SU y)) ->
+  (forall x, (forall y, P x y) -> forall y, P (SU x) y) ->
+  forall x y, P x y.
+Proof.
+  intros H00 H0y Hxy x.
+  apply (IND (fun x' => forall y, P x' y)).
+  + intro y. apply (IND (P ZE)).
+    * exact H00.
+    * exact H0y.
+  + intros x' IH. apply Hxy, IH.
+Defined.
+
+Inductive FO_Term : Set :=
+| FO_Var : nat -> FO_Term
+| FO_ZE  : FO_Term
+| FO_SU  : FO_Term -> FO_Term
+| FO_AD  : FO_Term -> FO_Term -> FO_Term
+| FO_MU  : FO_Term -> FO_Term -> FO_Term.
+
+Fixpoint eval_fo_term (env : nat -> N) (t : FO_Term) : N :=
+  match t with
+  | FO_Var n => env n
+  | FO_ZE => ZE
+  | FO_SU u => SU (eval_fo_term env u)
+  | FO_AD u1 u2 => AD (eval_fo_term env u1) (eval_fo_term env u2)
+  | FO_MU u1 u2 => MU (eval_fo_term env u1) (eval_fo_term env u2)
+  end.
+
+Inductive FO_Formula : Set :=
+| FO_Eq  : FO_Term -> FO_Term -> FO_Formula
+| FO_Not : FO_Formula -> FO_Formula
+| FO_And : FO_Formula -> FO_Formula -> FO_Formula
+| FO_Or  : FO_Formula -> FO_Formula -> FO_Formula
+| FO_Imp : FO_Formula -> FO_Formula -> FO_Formula
+| FO_All : nat -> FO_Formula -> FO_Formula
+| FO_Ex  : nat -> FO_Formula -> FO_Formula.
+
+Definition update_env (env : nat -> N) (x : nat) (val : N) : nat -> N :=
+  fun y => if Nat.eqb x y then val else env y.
+
+Fixpoint eval_fo_formula (env : nat -> N) (phi : FO_Formula) : Prop :=
+  match phi with
+  | FO_Eq t1 t2 => eval_fo_term env t1 = eval_fo_term env t2
+  | FO_Not psi => ~ (eval_fo_formula env psi)
+  | FO_And psi1 psi2 => eval_fo_formula env psi1 /\ eval_fo_formula env psi2
+  | FO_Or psi1 psi2 => eval_fo_formula env psi1 \/ eval_fo_formula env psi2
+  | FO_Imp psi1 psi2 => eval_fo_formula env psi1 -> eval_fo_formula env psi2
+  | FO_All x psi => forall v : N, eval_fo_formula (update_env env x v) psi
+  | FO_Ex x psi => exists v : N, eval_fo_formula (update_env env x v) psi
+  end.
+
+Theorem PA_fo_induction_instance (phi : FO_Formula) (x : nat) (env : nat -> N) :
+  eval_fo_formula (update_env env x ZE) phi ->
+  (forall y : N, eval_fo_formula (update_env env x y) phi ->
+                 eval_fo_formula (update_env env x (SU y)) phi) ->
+  forall y : N, eval_fo_formula (update_env env x y) phi.
+Proof.
+  intros H0 Hstep y.
+  apply (IND (fun v => eval_fo_formula (update_env env x v) phi)).
+  - exact H0.
+  - exact Hstep.
+Defined.
+
 Lemma LE_trans (a b c:N): LE a b -> LE b c -> LE a c.
 Proof.
 unfold LE.
@@ -478,12 +713,16 @@ End Arithmetic.*)
 
 
 (* The standard model of PA. *)
-Module nat_pa (a:Ari) (ra:RA a) <: PA a ra.
+Module NatAri <: Ari.
 Definition N:=nat.
 Definition ZE:=0.
 Definition SU:=S.
 Definition AD x y:=x+y.
 Definition MU x y:=x*y.
+End NatAri.
+
+Module NatRA <: RA NatAri.
+Import NatAri.
 Theorem Q1 : forall (x:N), not (SU x = ZE). 
 Proof. firstorder. Defined.
 Theorem Q2 : forall (x y:N), SU x = SU y -> x = y.
@@ -502,6 +741,11 @@ Theorem Q6 : forall (x:N), MU x ZE = ZE.
 Proof. firstorder. Defined.
 Theorem Q7 : forall (x y:N), MU x (SU y) = AD (MU x y) x.
 Proof. firstorder. Defined.
+End NatRA.
+
+Module nat_pa <: PA NatAri NatRA.
+Export NatAri.
+Export NatRA.
 Theorem IND : forall (P:N->Prop),
 (P ZE -> (forall y:N, P y -> P (SU y))-> forall y:N, P y).
 Proof. intros P H0 Hn y. 
