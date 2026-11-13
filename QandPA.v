@@ -315,11 +315,33 @@ exists z.
 exact U.
 Defined.
 
+Theorem AD_assoc (x y z:N) : AD (AD x y) z = AD x (AD y z).
+Proof.
+pose (P := (fun z:N => AD (AD x y) z = AD x (AD y z))).
+apply (IND P); unfold P.
++ rewrite -> Q4.
+  rewrite -> Q4.
+  reflexivity.
++ intros z0 H.
+  rewrite -> Q5.
+  rewrite -> Q5.
+  rewrite -> Q5.
+  rewrite -> H.
+  reflexivity.
+Defined.
+
 Lemma LE_trans (a b c:N): LE a b -> LE b c -> LE a c.
 Proof.
 unfold LE.
-intros.
-Admitted.
+intros Hab Hbc.
+destruct Hab as [z1 E1].
+destruct Hbc as [z2 E2].
+exists (AD z1 z2).
+rewrite <- E2.
+rewrite <- E1.
+symmetry.
+apply AD_assoc.
+Defined.
 
 (* strong induction *)
 Section StrongInd.
