@@ -12,6 +12,7 @@ def main() -> int:
     coq_files = [
         os.path.join(ROOT, "QandPA.v"),
         os.path.join(ROOT, "proofs_with_omega.v"),
+        os.path.join(ROOT, "GodelFirst.v"),
     ]
     for vf in coq_files:
         if not os.path.isfile(vf) or os.path.getsize(vf) == 0:
