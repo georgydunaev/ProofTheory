@@ -300,7 +300,7 @@ Module X := TheoremsRA a ra.
 Import X.
 Import pa.
 
-Section Peano. (* TODO Separate the lemmas above *)
+Section Peano. (* Section Peano: additive and multiplicative ring theorems, first-order induction schemes, strong induction, and least number principles *)
 (*
 Context (IND : forall (P:N->Prop),
 (P ZE -> (forall y:N, P y -> P (SU y))-> forall y:N, P y)).
@@ -631,8 +631,10 @@ Proof.
 exists ZE. exact l1case0.
 Defined.
 
-(* assume X has no least element. *)
-
+(* Note: Classical well-ordering (wol1, WO) and the existential Least Number Principle
+   require excluded middle or decidability of the predicate on N, which are not assumed
+   in Intuitionistic Peano Arithmetic (IPA). They are preserved below as aborted drafts,
+   followed by the constructively valid contrapositive LNP closed with Defined. *)
 Lemma wol1 (X:N->Prop)(K:~(exists y, X y /\ forall z, (X z -> LE y z))):
 forall z, ~(X z).
 Proof.
