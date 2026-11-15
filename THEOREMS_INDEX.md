@@ -37,6 +37,7 @@ For detailed architectural descriptions, axiom systems, and open problems, see [
 23. **`l1case0` & `wol0`**: Zero is the least element of `N` (`forall z, LE ZE z`).
 24. **`LNP` (constructive)**: Intuitionistic contrapositive Least Number Principle (`(forall y, ~ F y \/ exists z, LT z y /\ F z) -> forall y, ~ F y`).
 25. **`NatAri`, `NatRA`, `nat_pa`**: Verified standard model of `RA` and `PA` over Coq's `nat`.
+26. **`PA_Order_Completions.v` (`PA_Order_Theorems`)**: Constructive `Qed.` proofs of `Q4_sym`, `LE_refl`, `LE_trans_qed`, `LE_succ_r`, `LE_succ_self`, `LE_succ_iff`, `AD_eq_zero`, `neq_succ_add`, `AD_cancel_l`, `LE_antisym`, `LE_eq_or_succ_le`, `LE_step_totality`, `l_1_5`, `LE_total`, `LT_trichotomy`, `LT_not_LE`, `eq_dec_N`, `LE_dec`, unconditional `wol1`, `bounded_least_witness`, `WO_dec`, and `LNP_existential_dec` (see [PA_ORDER_PROOF_NOTES.md](file:///botworkspace/ProofTheory/PA_ORDER_PROOF_NOTES.md)).
 
 ## 2. `GodelFirst.v` and `src/godel_incompleteness.py` (Gödel's First Incompleteness Theorem)
 
